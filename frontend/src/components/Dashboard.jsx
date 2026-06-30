@@ -36,7 +36,8 @@ export default function Dashboard() {
     setEscalationDraft(null);
     const toastId = toast.loading('Drafting escalation...');
     try {
-      const response = await fetch(`http://localhost:8000/api/issues/${issueId}/escalate`, { method: 'POST' });
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/issues/${issueId}/escalate`, { method: 'POST' });
       if (!response.ok) throw new Error('Escalation failed');
       const data = await response.json();
       setEscalationDraft(data);
@@ -54,7 +55,8 @@ export default function Dashboard() {
     
     setUpvotingIds(prev => new Set(prev).add(issueId));
     try {
-      const response = await fetch(`http://localhost:8000/api/issues/${issueId}/upvote`, { method: 'POST' });
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/issues/${issueId}/upvote`, { method: 'POST' });
       if (!response.ok) throw new Error('Failed to upvote');
       toast.success('Upvoted! Priority score recalculated.');
     } catch (err) {
