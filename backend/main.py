@@ -159,6 +159,8 @@ def api_escalate_issue(issue_id: str):
         )
         
         return draft.model_dump()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -189,6 +191,8 @@ def api_upvote_issue(issue_id: str):
         })
         
         return {"success": True, "upvotes": new_upvotes, "urgency_score": score.urgency_score}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
