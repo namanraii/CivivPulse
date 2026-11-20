@@ -44,4 +44,31 @@ def check_duplicate(new_issue_title: str, new_issue_desc: str, existing_issues: 
         ),
     )
     
-    return DuplicateCheckResult.model_validate_json(response.text)
+    result = DuplicateCheckResult.model_validate_json(response.text)
+    return _validate_against_known_ids(result, existing_issues)
+
+
+def _validate_against_known_ids(result: DuplicateCheckResult, existing_issues: List[dict]) -> DuplicateCheckResult:
+    """
+    Ensure a positive duplicate verdict points at one of the issues we actually sent.
+
+    The model can flag a duplicate while returning a null, empty, or invented
+    ``duplicate_of_id``. Storing that would mark the new report as a duplicate of an
+    issue that does not exist, so such verdicts are downgraded to "not a duplicate".
+    """
+    if not result.is_duplicate:
+        return result.model_copy(update={"duplicate_of_id": None})
+
+    known_ids = {str(issue.get("id")) for issue in existing_issues if issue.get("id") is not None}
+    duplicate_id = (result.duplicate_of_id or "").strip()
+    if duplicate_id in known_ids:
+        return result.model_copy(update={"duplicate_of_id": duplicate_id})
+
+    return DuplicateCheckResult(
+        is_duplicate=False,
+        duplicate_of_id=None,
+        reasoning=(
+            "Model flagged a duplicate but did not reference a known recent issue "
+            f"(got {result.duplicate_of_id!r}); treating as not a duplicate."
+        ),
+    )
